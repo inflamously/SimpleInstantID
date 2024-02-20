@@ -127,7 +127,7 @@ class App(Cmd):
             return
 
         if not self.negative_prompt:
-            print("No image loaded, please call 'positive_prompt' with custom prompt text ...")
+            print("No image loaded, please call 'negative_prompt' with custom prompt text ...")
             return
 
         result: StableDiffusionXLPipelineOutput = self.pipe(
