@@ -80,7 +80,10 @@ class App(Cmd):
         except Exception as e:
             print(e)
 
-    def do_load_vae(self, arg):
+    def do_reset_vae(self, arg = None):
+        self.vae = None
+
+    def do_load_vae(self, arg = None):
         try:
             filename = arg
 
