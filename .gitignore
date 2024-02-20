@@ -166,3 +166,7 @@ models/
 .cog
 
 gradio_cached_examples
+
+images/*
+examples/*
+.idea
