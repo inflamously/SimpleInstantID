@@ -7,6 +7,7 @@ import cv2
 import torch
 import numpy as np
 from PIL import Image
+from diffusers import AutoencoderKL
 from diffusers.pipelines.stable_diffusion_xl.pipeline_output import StableDiffusionXLPipelineOutput
 
 from diffusers.utils import load_image
@@ -33,6 +34,11 @@ class App(Cmd):
     face_emb = None
     face_kps = None
     pipe: StableDiffusionXLInstantIDPipeline = None
+    vae: AutoencoderKL = None
+
+    # Image
+    width = None
+    height = None
 
     def __init__(self):
         cmd.Cmd.__init__(self)
@@ -47,7 +53,8 @@ class App(Cmd):
         try:
             filename = arg
 
-            if not filename: print("No custom model input, proceeding loading base_model")
+            if not filename:
+                print("No custom model input, proceeding loading base_model")
             else:
                 checkpoint_path = os.path.join(os.getcwd(), "checkpoints")
                 for checkpoint in os.listdir(checkpoint_path):
@@ -73,8 +80,35 @@ class App(Cmd):
         except Exception as e:
             print(e)
 
+    def do_load_vae(self, arg):
+        try:
+            filename = arg
+
+            if not filename:
+                print("No vae input, proceeding loading base_vae")
+            else:
+                vae_path = os.path.join(os.getcwd(), "vae")
+                for checkpoint in os.listdir(vae_path):
+                    if filename in checkpoint:
+                        filename = os.path.join(vae_path, filename + ".safetensors")
+
+            print("Loading model from path {}".format(filename))
+
+            if not filename:
+                self.vae = None
+            else:
+                self.vae = AutoencoderKL.from_single_file(
+                    filename,
+                    controlnet=self.controlnet,
+                    torch_dtype=torch.float16,
+                )
+        except Exception as e:
+            print(e)
+
     def do_lowvram(self, arg: str = None):
+        self.pipe.enable_xformers_memory_efficient_attention()
         self.pipe.enable_model_cpu_offload()
+        print("WARNING: Please restart to disable lowvram")
 
     def do_positive_prompt(self,
                            arg="analog film photo of a man. faded film, desaturated, dinosaur, stained, highly detailed, found footage, masterpiece, best quality"):
@@ -83,6 +117,15 @@ class App(Cmd):
     def do_negative_prompt(self,
                            arg: str = "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, painting, drawing, illustration, glitch, deformed, mutated, cross-eyed, ugly, disfigured (lowres, low quality, worst quality:1.2), (text:1.2), watermark, painting, drawing, illustration, glitch,deformed, mutated, cross-eyed, ugly, disfigured"):
         self.negative_prompt = arg
+
+    def do_image_size(self, arg: str):
+        if not arg:
+            print("No image size providen, please input (width) (height) when calling 'image_size'")
+            width, height = arg.split()
+            if not width or not height:
+                print("Invalid width or height detected")
+            self.width = width
+            self.height = height
 
     def do_load_image(self, arg: str = ""):
         if not os.path.exists("images"):
@@ -139,6 +182,9 @@ class App(Cmd):
             ip_adapter_scale=0.8,
             num_inference_steps=30,
             guidance_scale=5,
+            width=self.width,
+            height=self.height,
+            vae=self.vae,
         )
 
         self.image = result.images[0]
@@ -175,7 +221,7 @@ class App(Cmd):
         self.controlnet = ControlNetModel.from_pretrained(self.controlnet_path, torch_dtype=torch.float16)
 
 
-def resize_img(input_image, max_side=1016, min_side=1016, size=None,
+def resize_img(input_image, max_side=1016, min_side=768, size=None,
                pad_to_max_side=False, mode=Image.BILINEAR, base_pixel_number=64):
     w, h = input_image.size
     if size is not None:
