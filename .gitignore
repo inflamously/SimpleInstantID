@@ -161,12 +161,14 @@ cython_debug/
 huggingface/
 checkpoints/
 models/
+vae/
+outputs/
 
 # Cog
 .cog
 
 gradio_cached_examples
 
-images/*
-examples/*
+images/
+examples/
 .idea
