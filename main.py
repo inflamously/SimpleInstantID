@@ -111,7 +111,7 @@ class App(Cmd):
     def do_lowvram(self, arg: str = None):
         self.pipe.enable_xformers_memory_efficient_attention()
         self.pipe.enable_model_cpu_offload()
-        print("WARNING: Please restart to disable lowvram")
+        print("WARNING: to disable lowvram, please restart application")
 
     def do_positive_prompt(self,
                            arg="analog film photo of a man. faded film, desaturated, dinosaur, stained, highly detailed, found footage, masterpiece, best quality"):
