@@ -16,7 +16,7 @@ from diffusers.models import ControlNetModel
 from insightface.app import FaceAnalysis
 from pipeline_stable_diffusion_xl_instantid import StableDiffusionXLInstantIDPipeline, draw_kps
 
-
+# TODO: Split App into various classes
 class App(Cmd):
     face_adapter = f'./checkpoints/ip-adapter.bin'
     controlnet_path = f'./checkpoints/ControlNetModel'
