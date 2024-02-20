@@ -153,8 +153,14 @@ class App(Cmd):
         if not os.path.exists("outputs"):
             os.mkdir("outputs")
 
+        if not arg or len(arg) < 0:
+            print("Invalid filename for saving image")
+            return
+
         if self.image:
-            self.image.save(os.path.join('outputs', '{}.jpg'.format(arg)))
+            filename = os.path.join('outputs', '{}.png'.format(arg))
+            print("Saving image to {}".format(filename))
+            self.image.save(filename)
 
     def do_exit(self, arg=None):
         sys.exit(0)
