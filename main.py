@@ -61,7 +61,7 @@ class App(Cmd):
                     if filename in checkpoint:
                         filename = os.path.join(checkpoint_path, filename + ".safetensors")
 
-            print("Loading model from path {}".format(filename))
+            print("Loading model from path {}".format(filename if filename else self.base_model))
 
             if not filename:
                 self.pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
