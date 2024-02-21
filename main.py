@@ -8,7 +8,6 @@ import torch
 import numpy as np
 from PIL import Image
 from diffusers import AutoencoderKL, LCMScheduler
-from diffusers.pipelines.controlnet import MultiControlNetModel
 from diffusers.pipelines.stable_diffusion_xl.pipeline_output import StableDiffusionXLPipelineOutput
 
 from diffusers.utils import load_image
@@ -30,6 +29,7 @@ class App(Cmd):
     # Inference
     pipe: StableDiffusionXLInstantIDPipeline = None
     vae: AutoencoderKL = None
+    default_scheduler: None
 
     # Generation data
     positive_prompt = None
@@ -88,11 +88,15 @@ class App(Cmd):
                 )
             self.pipe.cuda()
             self.pipe.load_ip_adapter_instantid(self.face_adapter)
+            self.default_scheduler = self.pipe.scheduler
         except Exception as e:
             print(e)
 
     def do_reset_vae(self, arg=None):
         self.vae = None
+
+    def do_reset_pose_image(self, arg=None):
+        self.pose_depth_image = None
 
     def do_load_vae(self, arg=None):
         try:
@@ -171,6 +175,11 @@ class App(Cmd):
         self.pipe.scheduler = LCMScheduler.from_config(self.pipe.scheduler.config)
         self.pipe.enable_lora()
         self.is_lcm_mode = True
+
+    def do_disable_lcm(self, arg):
+        self.pipe.scheduler = self.default_scheduler
+        self.pipe.disable_lora()
+        self.is_lcm_mode = False
 
     def do_load_pose_image(self, arg):
         if not os.path.exists("images"):
