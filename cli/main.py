@@ -68,12 +68,14 @@ class App(Cmd):
         self.prompt = "$: "
         self.intro = "InstantID CLI, please load_model and load_image before proceeding."
         self.__load_instant_id()
-        self.do_load_model()
         self.do_positive_prompt()
         self.do_negative_prompt()
 
     def do_load_model(self, model_name: str = None):
-        self.pipe, self.default_scheduler = resources.load_model(self.face_controlnet, model_name)
+        try:
+            self.pipe, self.default_scheduler = resources.load_model(self.face_controlnet, model_name)
+        except TypeError as e:
+            print(e)
 
     def do_reset_vae(self, arg=None):
         self.vae = None
