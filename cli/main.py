@@ -16,15 +16,21 @@ from diffusers.models import ControlNetModel
 from insightface.app import FaceAnalysis
 from transformers import DPTForDepthEstimation, DPTImageProcessor
 
+import resources
 from pipeline_stable_diffusion_xl_instantid import StableDiffusionXLInstantIDPipeline, draw_kps
+
+
+# @click.group(invoke_without_command=True)
+# @click.pass_context
+# def app(ctx):
+#     while True:
+#         cmd = click.prompt("$")
+#         cmd
 
 
 # TODO: Split App into various classes
 class App(Cmd):
-    face_adapter = f'./checkpoints/ip-adapter.bin'
     controlnet_path = f'./checkpoints/ControlNetModel'
-
-    base_model = 'stabilityai/stable-diffusion-xl-base-1.0'
 
     # Inference
     pipe: StableDiffusionXLInstantIDPipeline = None
@@ -38,6 +44,10 @@ class App(Cmd):
     width = None
     height = None
     is_lcm_mode = False
+    steps = 30
+    ip_adapter_scale = 0.8
+    controlnet_conditioning_scale = 0.8
+    guidance_scale = 1.5
 
     # AI
     face_controlnet = None
@@ -60,37 +70,8 @@ class App(Cmd):
         self.do_positive_prompt()
         self.do_negative_prompt()
 
-    def do_load_model(self, arg: str = None):
-        try:
-            filename = arg
-
-            if not filename:
-                print("No custom model input, proceeding loading base_model")
-            else:
-                checkpoint_path = os.path.join(os.getcwd(), "checkpoints")
-                for checkpoint in os.listdir(checkpoint_path):
-                    if filename in checkpoint:
-                        filename = os.path.join(checkpoint_path, filename + ".safetensors")
-
-            print("Loading model from path {}".format(filename if filename else self.base_model))
-
-            if not filename:
-                self.pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
-                    self.base_model,
-                    controlnet=self.face_controlnet,
-                    torch_dtype=torch.float16,
-                )
-            else:
-                self.pipe = StableDiffusionXLInstantIDPipeline.from_single_file(
-                    filename,
-                    controlnet=self.face_controlnet,
-                    torch_dtype=torch.float16,
-                )
-            self.pipe.cuda()
-            self.pipe.load_ip_adapter_instantid(self.face_adapter)
-            self.default_scheduler = self.pipe.scheduler
-        except Exception as e:
-            print(e)
+    def do_load_model(self, model_name: str = None):
+        self.pipe, self.default_scheduler = resources.load_model(self.face_controlnet, model_name)
 
     def do_reset_vae(self, arg=None):
         self.vae = None
@@ -98,30 +79,8 @@ class App(Cmd):
     def do_reset_pose_image(self, arg=None):
         self.pose_depth_image = None
 
-    def do_load_vae(self, arg=None):
-        try:
-            filename = arg
-
-            if not filename:
-                print("No vae input, proceeding loading base_vae")
-            else:
-                vae_path = os.path.join(os.getcwd(), "vae")
-                for checkpoint in os.listdir(vae_path):
-                    if filename in checkpoint:
-                        filename = os.path.join(vae_path, filename + ".safetensors")
-
-            print("Loading model from path {}".format(filename))
-
-            if not filename:
-                self.vae = None
-            else:
-                self.vae = AutoencoderKL.from_single_file(
-                    filename,
-                    # controlnet=self.controlnet,
-                    torch_dtype=torch.float16,
-                )
-        except Exception as e:
-            print(e)
+    def do_load_vae(self, vaename=None):
+        self.vae = resources.load_vae(vaename)
 
     def do_lowvram(self, arg: str = None):
         self.pipe.enable_xformers_memory_efficient_attention()
@@ -175,11 +134,15 @@ class App(Cmd):
         self.pipe.scheduler = LCMScheduler.from_config(self.pipe.scheduler.config)
         self.pipe.enable_lora()
         self.is_lcm_mode = True
+        self.steps = 5
+        self.guidance_scale = 1.5
 
     def do_disable_lcm(self, arg):
         self.pipe.scheduler = self.default_scheduler
         self.pipe.disable_lora()
         self.is_lcm_mode = False
+        self.guidance_scale = 5
+        self.steps = 30
 
     def do_load_pose_image(self, arg):
         if not os.path.exists("images"):
@@ -230,10 +193,10 @@ class App(Cmd):
             negative_prompt=self.negative_prompt,
             image_embeds=self.face_emb,
             image=self.pose_depth_image if self.pose_depth_image else self.face_kps,
-            controlnet_conditioning_scale=0.8,
-            ip_adapter_scale=0.8,
-            num_inference_steps=30,
-            guidance_scale=5 if self.is_lcm_mode else 1.5,
+            controlnet_conditioning_scale=self.controlnet_conditioning_scale,
+            ip_adapter_scale=self.ip_adapter_scale,
+            num_inference_steps=self.steps,
+            guidance_scale=self.guidance_scale,
             width=self.width,
             height=self.height,
             vae=self.vae,
@@ -346,5 +309,6 @@ def load_face(facer, image_filepath):
 
 
 if __name__ == "__main__":
+    # app()
     main = App()
     main.cmdloop()
