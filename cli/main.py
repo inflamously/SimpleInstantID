@@ -208,6 +208,8 @@ class App(Cmd):
                 "prompt": self.positive_prompt,
                 "negative_prompt": self.negative_prompt,
                 "num_inference_steps": self.steps,
+                "controlnet_conditioning_scale": self.controlnet_conditioning_scale,
+                "ip_adapter": self.ip_adapter_scale,
                 "guidance_scale": self.guidance_scale,
                 "width": self.width,
                 "height": self.height,
