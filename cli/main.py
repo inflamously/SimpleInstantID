@@ -178,11 +178,11 @@ class App(Cmd):
             return
 
         if not self.positive_prompt:
-            print("No image loaded, please call 'positive_prompt' with custom prompt text ...")
+            print("Missing positive_prompt, please call 'positive_prompt' with custom prompt text ...")
             return
 
         if not self.negative_prompt:
-            print("No image loaded, please call 'negative_prompt' with custom prompt text ...")
+            print("Missing negative_prompt, please call 'negative_prompt' with custom prompt text ...")
             return
 
         if self.pose_depth_image:
