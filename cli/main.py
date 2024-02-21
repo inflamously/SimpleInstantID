@@ -3,6 +3,7 @@ import json
 import os.path
 import sys
 from cmd import Cmd
+from datetime import datetime
 
 import cv2
 import torch
@@ -189,15 +190,18 @@ class App(Cmd):
         else:
             self.pipe.controlnet = self.face_controlnet
 
-        print("Inference started with config: {}".format(json.dumps({
-            "prompt": self.positive_prompt,
-            "negative_prompt": self.negative_prompt,
-            "num_inference_steps": self.steps,
-            "guidance_scale": self.guidance_scale,
-            "width": self.width,
-            "height": self.height,
-            "lcm": self.is_lcm_mode,
-        })))
+        print("Inference started")
+
+        with open("inference.log", "a+") as f:
+            f.write("[{}]: {}\n".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), json.dumps({
+                "prompt": self.positive_prompt,
+                "negative_prompt": self.negative_prompt,
+                "num_inference_steps": self.steps,
+                "guidance_scale": self.guidance_scale,
+                "width": self.width,
+                "height": self.height,
+                "lcm": self.is_lcm_mode,
+            })))
 
         result: StableDiffusionXLPipelineOutput = self.pipe(
             prompt=self.positive_prompt,

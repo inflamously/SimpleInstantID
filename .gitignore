@@ -169,6 +169,8 @@ outputs/
 
 gradio_cached_examples
 
+inference.log
+
 images/
 examples/
 .idea
