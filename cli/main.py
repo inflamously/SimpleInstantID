@@ -97,6 +97,17 @@ class App(Cmd):
                            arg: str = "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, painting, drawing, illustration, glitch, deformed, mutated, cross-eyed, ugly, disfigured (lowres, low quality, worst quality:1.2), (text:1.2), watermark, painting, drawing, illustration, glitch,deformed, mutated, cross-eyed, ugly, disfigured"):
         self.negative_prompt = arg
 
+    def do_ai_params(self, arg=None):
+        try:
+            steps, ip_adapter_scale, controlnet_conditioning_scale, guidance_scale = arg.split()
+            self.steps = int(steps)
+            self.ip_adapter_scale = float(ip_adapter_scale)
+            self.controlnet_conditioning_scale = float(controlnet_conditioning_scale)
+            self.guidance_scale = float(guidance_scale)
+        except ValueError:
+            print(
+                "Invalid arguments passed, please input args in follwing order (steps, ip_adapter, controlnet_conditioning_scale, guidance_scale)")
+
     def do_image_size(self, arg: str):
         if not arg or len(arg) <= 0:
             print("No image size providen, please input (width) (height) when calling 'image_size'")
