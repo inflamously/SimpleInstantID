@@ -1,4 +1,5 @@
 import cmd
+import json
 import os.path
 import sys
 from cmd import Cmd
@@ -34,7 +35,7 @@ class App(Cmd):
 
     # Inference
     pipe: StableDiffusionXLInstantIDPipeline = None
-    vae: AutoencoderKL = None
+    vae: AutoencoderKL | None = None
     default_scheduler: None
 
     # Generation data
@@ -188,6 +189,16 @@ class App(Cmd):
         else:
             self.pipe.controlnet = self.face_controlnet
 
+        print("Inference started with config: {}".format(json.dumps({
+            "prompt": self.positive_prompt,
+            "negative_prompt": self.negative_prompt,
+            "num_inference_steps": self.steps,
+            "guidance_scale": self.guidance_scale,
+            "width": self.width,
+            "height": self.height,
+            "lcm": self.is_lcm_mode,
+        })))
+
         result: StableDiffusionXLPipelineOutput = self.pipe(
             prompt=self.positive_prompt,
             negative_prompt=self.negative_prompt,
@@ -290,7 +301,6 @@ def get_depth_map(image, width=1024, height=1024):
 
 
 def load_image_from_filepath(filename):
-    image_filepath = None
     for image in os.listdir("images"):
         if filename in image:
             return os.path.join("images", image)
